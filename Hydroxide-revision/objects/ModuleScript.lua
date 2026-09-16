@@ -7,7 +7,16 @@ function ModuleScript.new(instance)
     moduleScript.Instance = instance
     moduleScript.Constants = getConstants(closure)
     moduleScript.Protos = getProtos(closure)
-    --moduleScript.ReturnValue = require(instance) // causes detection
+    
+    moduleScript.GetSource = function()
+        if decompile then
+            local success, source = pcall(decompile, instance)
+            if success and source then
+                return source
+            end
+        end
+        return "-- Decompiler not available or failed\n-- Use an executor with decompile() support"
+    end
 
     return moduleScript
 end
