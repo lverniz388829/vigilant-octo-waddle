@@ -22,13 +22,24 @@ local moduleLogs = {}
 local selectedLog
 
 local pathContext = ContextMenuButton.new("rbxassetid://4891705738", "Get Module Path")
-moduleList:BindContextMenu(ContextMenu.new({ pathContext }))
+local decompileContext = ContextMenuButton.new("rbxassetid://4800244808", "Copy Decompiled Source")
+moduleList:BindContextMenu(ContextMenu.new({ pathContext, decompileContext }))
 
 pathContext:SetCallback(function()
     local selectedInstance = selectedLog.ModuleScript.Instance
-
     setClipboard(getInstancePath(selectedInstance))
     MessageBox.Show("Success", ("%s's path was copied to your clipboard."):format(selectedInstance.Name), MessageType.OK)
+end)
+
+decompileContext:SetCallback(function()
+    local moduleScript = selectedLog.ModuleScript
+    MessageBox.Show("Decompiling...", "Please wait, decompiling module source...", MessageType.OK)
+    task.spawn(function()
+        local source = moduleScript.GetSource()
+        setClipboard(source)
+        task.wait(0.1)
+        MessageBox.Show("Success", "Decompiled source copied to clipboard.\n\nPaste it in a text editor to view.", MessageType.OK)
+    end)
 end)
 
 -- Log Object
