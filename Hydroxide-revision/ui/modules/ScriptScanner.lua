@@ -1,3 +1,5 @@
+local TextService = game:GetService("TextService")
+
 local ScriptScanner = {}
 local Methods = import("modules/ScriptScanner")
 
@@ -73,9 +75,11 @@ end)
 
 decompileContext:SetCallback(function()
     local localScript = selected.logContext.LocalScript
+    MessageBox.Show("Decompiling...", "Please wait, decompiling script source...", MessageType.OK)
     task.spawn(function()
         local source = localScript.GetSource()
         setClipboard(source)
+        task.wait(0.1)
         MessageBox.Show("Success", "Decompiled source copied to clipboard.", MessageType.OK)
     end)
 end)
@@ -110,14 +114,23 @@ viewSourceContext:SetCallback(function()
             createConstant(i, v)
         end
 
-        if InfoSource and InfoSource:FindFirstChild("SourceBox") then
-            local sourceBox = InfoSource.SourceBox
-            task.spawn(function()
-                local source = localScript.GetSource()
-                if sourceBox and sourceBox:FindFirstChild("Source") then
-                    sourceBox.Source.Text = source
+        local sourceDisplayed = false
+        if InfoSource then
+            local sourceBox = InfoSource:FindFirstChild("SourceBox")
+            if sourceBox then
+                local sourceText = sourceBox:FindFirstChild("Source")
+                if sourceText and sourceText:IsA("TextLabel") or sourceText:IsA("TextBox") then
+                    task.spawn(function()
+                        local source = localScript.GetSource()
+                        sourceText.Text = source
+                        sourceDisplayed = true
+                    end)
                 end
-            end)
+            end
+        end
+        
+        if not sourceDisplayed then
+            warn("[Hydroxide] Source display UI not found. Use 'Copy Decompiled Source' from context menu instead.")
         end
     end
 end)
@@ -211,14 +224,25 @@ function Log.new(localScript)
                 createConstant(i, v)
             end
 
-            if InfoSource and InfoSource:FindFirstChild("SourceBox") then
-                local sourceBox = InfoSource.SourceBox
-                task.spawn(function()
-                    local source = localScript.GetSource()
-                    if sourceBox and sourceBox:FindFirstChild("Source") then
-                        sourceBox.Source.Text = source
+            local sourceDisplayed = false
+            if InfoSource then
+                local sourceBox = InfoSource:FindFirstChild("SourceBox")
+                if sourceBox then
+                    local sourceText = sourceBox:FindFirstChild("Source")
+                    if sourceText and (sourceText:IsA("TextLabel") or sourceText:IsA("TextBox")) then
+                        task.spawn(function()
+                            oh.setStatus("Decompiling " .. scriptName .. "...")
+                            local source = localScript.GetSource()
+                            sourceText.Text = source
+                            sourceDisplayed = true
+                            oh.setStatus("Ready")
+                        end)
                     end
-                end)
+                end
+            end
+            
+            if not sourceDisplayed then
+                print("[Hydroxide] Source display UI not found. Use right-click → 'Copy Decompiled Source' instead.")
             end
 
             selected.scriptLog = log
